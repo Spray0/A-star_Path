@@ -1,5 +1,5 @@
 # A-star_Path
-![cpp](https://img.shields.io/badge/Use-C++-red)![me](https://img.shields.io/badge/2019/11-Spray0-blue)![os1](https://img.shields.io/badge/Version-1.0.1-green)
+![cpp](https://img.shields.io/badge/Use-C++-red) ![me](https://img.shields.io/badge/2019/11-Spray0-blue) ![os1](https://img.shields.io/badge/Version-1.0.1-green)
 
 A*路径算法,C++实现。
 
