@@ -38,6 +38,6 @@ bool Path_Calc_Optimize(XY_t start,XY_t target,std::vector<signed char> griddata
 ```
 
 
-<img src="o1.png" height="500"/> <img src="o3.png" width="400"/>
+<img src="o1.png" height="500"/><img src="o3.png" width="400"/>
 
 
