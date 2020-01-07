@@ -32,6 +32,20 @@ float A_star_path::distance_between(A_star_path::XY_t nodef, A_star_path::XY_t n
 	return (float) sqrt((nodef.x - nodet.x) * (nodef.x - nodet.x) + (nodef.y - nodet.y) * (nodef.y - nodet.y));
 }
 
+//计算节点a指向节点b的角度
+double A_star_path::Calc_Theta_a2b(XY_t a,XY_t b){
+	double dl = A_star_path::distance_between(a, b);
+	double tx = (double)a.x - (double)b.x;
+	double ty = (double)a.y - (double)b.y;
+	double theta = asinf(double(ty / dl));
+
+	if      ((tx < 0) && (ty > 0))   theta = 3.14159 - theta;			
+	else if ((tx < 0) && (ty < 0))   theta = -theta - 3.14159;
+
+	theta=(double)(int)(theta*100)/100.f;
+	return theta;		
+}
+
 //OPEN表插入项
 A_star_path::open_t insert_open(unsigned char flag, unsigned int x, unsigned int y, unsigned int px, unsigned int py, float hn, float gn, float fn) {
 	return {flag, x, y, px, py, hn, gn, fn};
@@ -93,7 +107,7 @@ A_star_path::open_t& A_star_path::min_fn(std::vector<A_star_path::open_t> &open_
 }
 
 //路径计算
-bool A_star_path::Path_Calc(A_star_path::XY_t start, A_star_path::XY_t target, std::vector<signed char> griddata, int gridmap_width, int gridmap_height) {
+bool A_star_path::Path_Calc_Raw(A_star_path::XY_t start, A_star_path::XY_t target, std::vector<signed char> griddata, int gridmap_width, int gridmap_height) {
 
 	this->Start = start;
 	this->Target = target;
@@ -186,8 +200,129 @@ bool A_star_path::Path_Calc(A_star_path::XY_t start, A_star_path::XY_t target, s
 		mypath_list.push_back(*iter_end);
 	}
 
-	printf("[A*]	Path length: %.2f steps: %ld\n", path_length, mypath_list.size());
+	printf("[A*]    Path length: %.2f \n", path_length);
 	printf("[A*]	Path calc done.\n");
 	return true;
 }
 
+// 检查两个节点之间是否占用
+bool A_star_path::isOccupied_a2b(A_star_path::XY_t a,A_star_path::XY_t b){
+
+	std::vector<A_star_path::XY_t> maybe;
+	int dx=b.x-a.x;
+	int dy=b.y-a.y;
+	A_star_path::XY_t add;
+
+	if((dx==0)&&(dy!=0)){
+		if(dy>0)
+			for(int c=1;c<=dy;++c)	maybe.push_back(XY(a.x+0,a.y+c));
+		else
+			for(int c=dy;c<0;++c)	maybe.push_back(XY(a.x+0,a.y+c));
+	}
+	else if((dy==0)&&(dx!=0)){
+		if(dx>0)
+			for(int c=1;c<=dx;++c)	maybe.push_back(XY(a.x+c,a.y+0));
+		else
+			for(int c=dx;c<0;++c)	maybe.push_back(XY(a.x+c,a.y+0));
+	}
+	else if((dx!=0)&&(dy!=0)){
+		if(dx>0)
+			for(int c=1;c<=dx;++c)	maybe.push_back(XY(a.x+c,(dy>0)?a.y+c:a.y-c));
+		else
+			for(int c=dx;c<0;++c)	maybe.push_back(XY(a.x+c,(dy<0)?a.y+c:a.y-c));	
+	}
+
+	bool isOC=false;
+
+	for(auto tp:maybe)	isOC=isOccupied(tp)?true:isOC;	//检查每个数据是否占用
+	return isOC;
+}
+
+// 路径计算 + 优化
+// 简洁节点描述、路径最优下减少转向次数
+bool A_star_path::Path_Calc_Optimize(A_star_path::XY_t start, A_star_path::XY_t target, std::vector<signed char> griddata, int gridmap_width, int gridmap_height) {
+	
+	path_list.clear();
+	// 计算路径
+	if(!A_star_path::Path_Calc_Raw(start,target,griddata,gridmap_width,gridmap_height))
+		return false;
+
+	this->GridData = griddata;
+	this->GridMap_width = gridmap_width;
+	this->GridMap_height = gridmap_height;
+	std::vector<A_star_path::XY_t> rp_list; // 转向节点表
+
+	printf("[A*]    Optimizing Path...\n");
+	// 简洁描述路径优化
+	{
+		rp_list.push_back(mypath_list[0]);
+		double k1,k2;
+		// 判断出转点 并添加
+		for(int cnt=1;cnt<mypath_list.size()-1;++cnt)
+		{
+			k1=Calc_Theta_a2b(mypath_list[cnt-1],mypath_list[cnt]);
+			k2=Calc_Theta_a2b(mypath_list[cnt],mypath_list[cnt+1]);
+			//printf("%.4f,%.4f\r\n",k1,k2);
+			if(k1!=k2)
+				rp_list.push_back(mypath_list[cnt]);
+		}
+			
+		rp_list.push_back(mypath_list[mypath_list.size()-1]);
+	}
+
+	//for(auto data:rp_list) printf("rp_list[%d,%d]\r\n",data.x,data.y);
+	// 路径优化(必要优化) 减少转向
+	{
+		std::vector<bool> rp_flag(rp_list.size(),false); // 路径标识
+
+		//遍历节点
+		for(int cnt=0;cnt<rp_list.size()-2;++cnt){
+			double temp1,temp2;
+			//printf("now check [%d,%d]\r\n",rp_list[cnt].x,rp_list[cnt].y);
+			if(cnt==rp_list.size()-3){
+				temp1=Calc_Theta_a2b(rp_list[cnt-1],rp_list[cnt]);
+				temp2=Calc_Theta_a2b(rp_list[cnt+1],rp_list[cnt+2]);
+			}else{
+				temp1=Calc_Theta_a2b(rp_list[cnt],rp_list[cnt+1]);
+				temp2=Calc_Theta_a2b(rp_list[cnt+2],rp_list[cnt+3]);
+			}
+
+			if(temp1!=temp2)	rp_flag[cnt]=true;
+			else if(!rp_flag[cnt]){	// 如果没有处理过
+				
+				// 判断 
+				A_star_path::XY_t new_tp,new_tp2;
+				new_tp.x=rp_list[cnt+2].x-rp_list[cnt+1].x+rp_list[cnt].x;
+				new_tp.y=rp_list[cnt+2].y-rp_list[cnt+1].y+rp_list[cnt].y;
+				new_tp2.x=rp_list[cnt+1].x-rp_list[cnt].x+new_tp.x;
+				new_tp2.y=rp_list[cnt+1].y-rp_list[cnt].y+new_tp.y;
+		
+				if((isOccupied_a2b(rp_list[cnt],new_tp))||(isOccupied_a2b(new_tp,rp_list[cnt+2]))){
+					rp_flag[cnt]=true;
+				}else{
+					rp_list[cnt]=new_tp;
+
+					if((cnt!=rp_list.size()-3)&&(cnt!=0)){
+						rp_list.erase(rp_list.begin()+cnt+1,rp_list.begin()+cnt+3);
+						rp_flag.erase(rp_flag.begin()+cnt+1,rp_flag.begin()+cnt+3);
+						--cnt;
+					}
+					else if(cnt==0){
+						rp_list.erase(rp_list.begin()+cnt+1,rp_list.begin()+cnt+3);
+						rp_flag.erase(rp_flag.begin()+cnt+1,rp_flag.begin()+cnt+3);
+						rp_list.insert(rp_list.begin(),mypath_list[0]);
+						rp_flag.insert(rp_flag.begin(),false);
+						--cnt;
+					}
+					else{
+						rp_list.erase(rp_list.begin()+cnt+1,rp_list.begin()+cnt+2);
+						rp_flag.erase(rp_flag.begin()+cnt+1,rp_flag.begin()+cnt+2);
+					}
+				}
+			}
+		}
+	}
+	path_list=rp_list;
+	printf("[A*]    Done.\n");
+	return true;
+}

@@ -51,12 +51,16 @@ public:
 	std::vector<open_t> open_list;
 	std::vector<expand_t> expand_list;
 	std::vector<XY_t> mypath_list;
+	std::vector<XY_t> path_list;
 	friend signed char& operator>>(A_star_path::index_t index, std::vector<signed char> &data);
-	bool Path_Calc(XY_t start,XY_t target,std::vector<signed char> griddata,int gridmap_width,int gridmap_height);
+	bool Path_Calc_Raw(XY_t start,XY_t target,std::vector<signed char> griddata,int gridmap_width,int gridmap_height);
+	bool Path_Calc_Optimize(XY_t start,XY_t target,std::vector<signed char> griddata,int gridmap_width,int gridmap_height);
 private:
 	bool isOccupied(XY_t node);
 	void expand_array(float hn, XY_t node, XY_t target, XY_t max, std::vector<signed char> &map);
 	float distance_between(XY_t nodef, XY_t nodet);
+	double Calc_Theta_a2b(XY_t a,XY_t b);
+	bool isOccupied_a2b(A_star_path::XY_t a,A_star_path::XY_t b);
 	open_t& min_fn(std::vector<open_t> &open_list, XY_t Target);
 };
 
