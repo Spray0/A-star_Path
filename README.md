@@ -21,7 +21,7 @@ A*路径算法,C++实现。
 bool Path_Calc_Raw(XY_t start,XY_t target,std::vector<signed char> griddata,int gridmap_width,int gridmap_height)
 ```
 
-<img src="img.png" alt="img" style="zoom:30%;" />
+<img src="img.png"  width="400" />
 
 
 
@@ -38,9 +38,9 @@ bool Path_Calc_Optimize(XY_t start,XY_t target,std::vector<signed char> griddata
 ```
 
 
-  <img src="o1.png" width="300"/>   <img src="o2.png" width="300"/>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<img src="o1.png" width="300"/>   <img src="o2.png" width="300"/>
 
 
-  <img src="o3.png" width="800"/>
+  <img src="o3.png" width="400"/>
 
 
