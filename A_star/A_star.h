@@ -1,6 +1,6 @@
 /*
  * 	A star 路径规划
- * 	spray0 2019.11.22
+ * 	spray0 2020.1.7
  */
 #ifndef A_STAR_H
 #define A_STAR_H
