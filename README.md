@@ -29,9 +29,8 @@ bool Path_Calc_Raw(XY_t start,XY_t target,std::vector<signed char> griddata,int 
 
 目的：在路径最优的情况下减少不必要的转向次数
 
-方法：1.更改代价，即改变不同行进方向的代价。
-
-​			2.基于原始路径的优化，分析拐点>路径可行性>占用检查>迭代	（此优化算法采用）
+方法：1.更改代价，即改变不同行进方向的代价值。
+     2.基于原始路径的优化，分析拐点>路径可行性>占用检查>迭代	（此优化算法采用）
 
 ```c++
 bool Path_Calc_Optimize(XY_t start,XY_t target,std::vector<signed char> griddata,int gridmap_width,int gridmap_height)
