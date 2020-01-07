@@ -37,8 +37,10 @@ bool Path_Calc_Raw(XY_t start,XY_t target,std::vector<signed char> griddata,int 
 bool Path_Calc_Optimize(XY_t start,XY_t target,std::vector<signed char> griddata,int gridmap_width,int gridmap_height)
 ```
 
-
+<center class="half">
   <img src="o1.png" width="200"/><img src="o2.png" width="200"/>
-
-<img src="o3.png" width="800"/>
+</center>
+<center>
+  <img src="o3.png" width="800"/>
+</center>
 
